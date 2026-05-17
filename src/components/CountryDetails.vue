@@ -1,6 +1,6 @@
 <template>
   <div v-if="country">
-    <h2>{{ country.name?.common || country.name }}</h2>
+    <h1>{{ country.name?.common || country.name }}</h1>
 
     <img
       :src="flagUrl"
@@ -25,40 +25,45 @@
   </div>
 
   <div v-else>
-    <p>Select a country from the list.</p>
+    <p>Loading country...</p>
   </div>
 </template>
 
 <script setup>
-import { useRoute } from "vue-router";
 import { ref, computed, watch } from "vue";
-import countriesData from "../countries.json";
+import { useRoute } from "vue-router";
 
 const route = useRoute();
+
 const country = ref(null);
 
 const flagUrl = computed(() => {
   const code = country.value?.alpha2Code?.toLowerCase();
 
-  if (!code) {
-    return "";
-  }
-
-  return `https://flagpedia.net/data/flags/icon/72x54/${code}.png`;
+  return code
+    ? `https://flagpedia.net/data/flags/icon/72x54/${code}.png`
+    : "";
 });
 
-function findCountry(code) {
-  country.value = countriesData.find((singleCountry) => {
-    return singleCountry.alpha3Code === code;
-  });
+async function fetchCountry(code) {
+  if (!code) return;
+
+  try {
+    const response = await fetch(
+      `https://ih-countries-api.herokuapp.com/countries/${code}`
+    );
+
+    country.value = await response.json();
+
+  } catch (error) {
+    console.error("Error fetching country:", error);
+  }
 }
 
 watch(
   () => route.params.alpha3Code,
   (newCode) => {
-    if (newCode) {
-      findCountry(newCode);
-    }
+    fetchCountry(newCode);
   },
   { immediate: true }
 );
