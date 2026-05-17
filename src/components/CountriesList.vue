@@ -15,7 +15,7 @@
             :to="`/list/${country.alpha3Code}`"
             class="text-decoration-none"
           >
-            {{ country.name.common || country.name }}
+            {{ country.name?.common || country.name }}
           </router-link>
         </div>
       </div>
@@ -29,11 +29,18 @@
 
 <script setup>
 import { ref, onMounted } from "vue";
-import countriesData from "../countries.json";
 
 const countries = ref([]);
 
-onMounted(() => {
-  countries.value = countriesData;
+onMounted(async () => {
+  try {
+    const response = await fetch(
+      "https://ih-countries-api.herokuapp.com/countries"
+    );
+
+    countries.value = await response.json();
+  } catch (error) {
+    console.error("Error fetching countries:", error);
+  }
 });
 </script>
